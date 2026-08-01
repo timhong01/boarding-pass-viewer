@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>座位圖</title>
+<style>
+  :root{
+    --seat-econ-a: #dfe7f2;
+    --seat-econ-b: #b9c9de;
+    --seat-biz-a: #f6dcb8;
+    --seat-biz-b: #e3ba82;
+    --seat-exit-a: #ffd0d0;
+    --seat-exit-b: #f4a8a8;
+    --you: #c62828;
+    --fam: #2e7d32;
+    --line: #333;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:#eee;}
+  body{
+    font-family: -apple-system, "PingFang TC", "Noto Sans TC", Arial, sans-serif;
+  }
+  .pager{
+    display:flex;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    width:100%;
+    height:100vh;
+  }
+  .page{
+    flex:0 0 100%;
+    scroll-snap-align:start;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:20px 12px 40px;
+    overflow-y:auto;
+  }
+  .card{
+    width:100%;
+    max-width:440px;
+    background:#fff;
+    border-radius:20px;
+    box-shadow:0 4px 24px rgba(0,0,0,0.08);
+    padding:18px 16px 24px;
+  }
+  .flight-tag{
+    display:inline-block;
+    background:#c8102e;
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    padding:3px 10px;
+    border-radius:20px;
+    margin-bottom:8px;
+  }
+  .title{
+    text-align:center;
+    color:#c8102e;
+    font-size:18px;
+    font-weight:700;
+    margin:0 0 2px;
+  }
+  .subtitle{
+    text-align:center;
+    color:#777;
+    font-size:12px;
+    margin:0 0 16px;
+  }
+  .fuselage{
+    border:2px solid var(--line);
+    border-radius:50px;
+    padding:14px 12px 16px;
+    background:#f9fafb;
+  }
+  .nose, .tail{
+    text-align:center;
+    font-size:10.5px;
+    color:#999;
+    margin-bottom:6px;
+  }
+  .tail{margin-top:8px;margin-bottom:0;}
+  .col-labels{
+    display:grid;
+    gap:3px;
+    font-size:10.5px;
+    font-weight:700;
+    color:#666;
+    text-align:center;
+    margin-bottom:4px;
+  }
+  .row{
+    display:grid;
+    gap:3px;
+    align-items:center;
+    margin-bottom:4px;
+  }
+  .cols-6{grid-template-columns: 20px repeat(3, 1fr) 12px repeat(3, 1fr);}
+  .cols-9{grid-template-columns: 20px repeat(3, 1fr) 10px repeat(3, 1fr) 10px repeat(3, 1fr);}
+  .row-num{
+    font-size:10.5px;
+    color:#555;
+    text-align:right;
+    padding-right:2px;
+  }
+  .aisle{height:100%;display:flex;justify-content:center;}
+  .aisle::before{content:"";width:4px;background:#e6e6e6;border-radius:2px;}
+  .seat{
+    aspect-ratio: 1 / 0.85;
+    border-radius:5px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:9px;font-weight:600;color:#456;
+    border:1px solid #8ba3c4;
+    background:linear-gradient(180deg, var(--seat-econ-a), var(--seat-econ-b));
+  }
+  .seat.biz{background:linear-gradient(180deg, var(--seat-biz-a), var(--seat-biz-b));border-color:#a8703a;color:#6b4319;}
+  .seat.exit{background:linear-gradient(180deg, var(--seat-exit-a), var(--seat-exit-b));border-color:#c85c5c;color:#8a3a3a;}
+  .seat.you{background:linear-gradient(180deg, #ff5252, var(--you));border-color:#7a0000;color:#fff;font-weight:800;box-shadow:0 0 0 2px #fff, 0 0 0 3.5px var(--you);}
+  .seat.fam{background:linear-gradient(180deg, #66bb6a, var(--fam));border-color:#1b4d1e;color:#fff;font-weight:800;box-shadow:0 0 0 2px #fff, 0 0 0 3.5px var(--fam);}
+  .seat.lav{background:#e6e6e6;border-color:#aaa;color:#999;}
+  .section-label{text-align:center;font-size:10px;color:#a8703a;margin:6px 0 8px;letter-spacing:1px;}
+  .divider{border:none;border-top:1px dashed #ddd;margin:8px 0 10px;}
+  .legend{margin-top:16px;display:grid;grid-template-columns: 1fr 1fr;gap:7px 14px;font-size:11px;}
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .legend-swatch{width:14px;height:14px;border-radius:4px;flex-shrink:0;}
+  .summary{margin-top:16px;background:#fff5f5;border:1.5px solid var(--you);border-radius:12px;padding:10px 14px;font-size:12px;line-height:1.7;color:#444;}
+  .summary b{color:var(--you);}
+
+  .ticket-info{
+    border:1.5px solid #c8102e;
+    border-radius:12px;
+    padding:10px 12px;
+    margin-bottom:14px;
+    background:#fffaf9;
+  }
+  .ti-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    padding:2px 0;
+  }
+  .ti-grid{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:4px;
+    margin-top:6px;
+    padding-top:6px;
+    border-top:1px dashed #eecccc;
+  }
+  .ti-grid > div{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+  }
+  .ti-label{
+    color:#999;
+    font-size:9.5px;
+  }
+  .ti-value{
+    color:#222;
+    font-weight:700;
+    font-size:12px;
+  }
+  .ti-grid .ti-value{font-size:13px;}
+
+  .bag-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:8px;
+    padding:6px 10px;
+    background:#fff2f0;
+    border:1px solid #f0cccc;
+    border-radius:8px;
+  }
+  .bag-icon{font-size:14px;}
+  .bag-row .ti-value{flex:1;}
+  .bag-weight{
+    background:#c8102e;
+    color:#fff;
+    font-size:10.5px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:20px;
+  }
+
+  .bag-tags{
+    margin-top:6px;
+    padding:8px 10px;
+    background:#fafafa;
+    border:1px solid #eee;
+    border-radius:8px;
+  }
+  .bag-tags-title{
+    font-size:10px;
+    color:#888;
+    margin-bottom:5px;
+  }
+  .bag-tags-list{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:5px;
+  }
+  .bag-tags-list span{
+    font-size:11.5px;
+    font-weight:700;
+    color:#333;
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:6px;
+    padding:4px 6px;
+    text-align:center;
+    letter-spacing:0.5px;
+  }
+
+  .dots{
+    position:fixed;
+    bottom:14px;left:0;right:0;
+    display:flex;justify-content:center;gap:8px;
+    pointer-events:none;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:#ccc;transition:background .2s;}
+  .dot.active{background:#c8102e;}
+  .swipe-hint{
+    position:fixed;top:10px;right:16px;
+    font-size:11px;color:#999;
+    background:#fff;padding:4px 10px;border-radius:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  }
+</style>
+</head>
+<body>
+
+<div class="swipe-hint">← 左右滑動切換航段 →</div>
+
+<div class="pager" id="pager">
+
+  <!-- ============ PAGE 1 : CDG -> IST ============ -->
+  <div class="page">
+    <div class="card">
+      <span class="flight-tag">第一段</span>
+      <p class="title">Airbus A321neo</p>
+      <p class="subtitle">XX1234　AAA → BBB　座位 21C</p>
+
+      <div class="ticket-info">
+        <div class="ti-row"><span class="ti-label">乘客</span><span class="ti-value">PASSENGER NAME</span></div>
+        <div class="ti-row"><span class="ti-label">航班</span><span class="ti-value">XX 1234</span></div>
+        <div class="ti-row"><span class="ti-label">日期</span><span class="ti-value">01 JAN 2026</span></div>
+        <div class="ti-row"><span class="ti-label">航線</span><span class="ti-value">CITY A (AAA) → CITY B (BBB)</span></div>
+        <div class="ti-grid">
+          <div><span class="ti-label">登機門</span><span class="ti-value">--</span></div>
+          <div><span class="ti-label">登機時間</span><span class="ti-value">--:--</span></div>
+          <div><span class="ti-label">起飛時間</span><span class="ti-value">--:--</span></div>
+          <div><span class="ti-label">座位</span><span class="ti-value">21C</span></div>
+        </div>
+        <div class="bag-row">
+          <span class="bag-icon">🧳</span>
+          <span class="ti-value" style="font-size:12px">行李直掛 BBB</span>
+          <span class="bag-weight">30KG</span>
+        </div>
+        <div class="bag-tags">
+          <div class="bag-tags-title">行李標籤（範例）</div>
+          <div class="bag-tags-list">
+            <span>XX 000001</span>
+            <span>XX 000002</span>
+            <span>XX 000003</span>
+            <span>XX 000004</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fuselage">
+        <div class="nose">機艏 ↑</div>
+        <div class="col-labels cols-6">
+          <div></div><div>A</div><div>B</div><div>C</div><div></div><div>D</div><div>E</div><div>F</div>
+        </div>
+
+        <div class="section-label">— 商務艙 Row 1–5 —</div>
+        <div id="biz-rows"></div>
+
+        <hr class="divider">
+
+        <div class="section-label">— 經濟艙 Row 6–34 —</div>
+        <div id="econ-rows"></div>
+
+        <div class="tail">↓ 機尾</div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:linear-gradient(180deg,var(--seat-biz-a),var(--seat-biz-b));border:1px solid #a8703a"></span>商務艙</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:linear-gradient(180deg,var(--seat-econ-a),var(--seat-econ-b));border:1px solid #8ba3c4"></span>經濟艙</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:linear-gradient(180deg,var(--seat-exit-a),var(--seat-exit-b));border:1px solid #c85c5c"></span>緊急出口排</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#e6e6e6;border:1px solid #aaa"></span>近洗手間</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:linear-gradient(180deg,#ff5252,var(--you));border:1px solid #7a0000"></span><span style="color:var(--you);font-weight:700">21C（您）</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background:linear-gradient(180deg,#66bb6a,var(--fam));border:1px solid #1b4d1e"></span><span style="color:var(--fam);font-weight:700">21D／21E</span></div>
+      </div>
+
+      <div class="summary">
+        <b>座位摘要</b><br>
+        您的座位：<b>21C</b>（左側走道座）<br>
+        同排另兩位：<b>21D／21E</b>（走道另一側）<br>
+        機型：Airbus A321neo，經濟艙 3-3 配置
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 2 : IST -> TPE ============ -->
+  <div class="page">
+    <div class="card">
+      <span class="flight-tag" style="background:#2e7d32">第二段</span>
+      <p class="title">Boeing 787-9 Dreamliner</p>
+      <p class="subtitle">XX5678　BBB → CCC　座位 38H</p>
+
+      <div class="ticket-info" style="border-color:#2e7d32">
+        <div class="ti-row"><span class="ti-label">乘客</span><span class="ti-value">PASSENGER NAME</span></div>
+        <div class="ti-row"><span class="ti-label">航班</span><span class="ti-value">XX 5678</span></div>
+        <div class="ti-row"><span class="ti-label">日期</span><span class="ti-value">02 JAN 2026</span></div>
+        <div class="ti-row"><span class="ti-label">航線</span><span class="ti-value">CITY B (BBB) → CITY C (CCC)</span></div>
+        <div class="ti-grid">
+          <div><span class="ti-label">登機門</span><span class="ti-value">待公布</span></div>
+          <div><span class="ti-label">登機時間</span><span class="ti-value">--:--</span></div>
+          <div><span class="ti-label">起飛時間</span><span class="ti-value">--:--</span></div>
+          <div><span class="ti-label">座位</span><span class="ti-value">38H</span></div>
+        </div>
+        <div class="bag-row" style="border-color:#c9e6ca;background:#f4faf4">
+          <span class="bag-icon">🧳</span>
+          <span class="ti-value" style="font-size:12px">同一行李，免在轉機點提領</span>
+          <span class="bag-weight" style="background:#2e7d32">30KG</span>
+        </div>
+        <div class="bag-tags" style="border-color:#c9e6ca">
+          <div class="bag-tags-title">行李標籤（範例）</div>
+          <div class="bag-tags-list">
+            <span>XX 000001</span>
+            <span>XX 000002</span>
+            <span>XX 000003</span>
+            <span>XX 000004</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fuselage">
+        <div class="nose">機艏 ↑</div>
+        <div class="col-labels cols-9">
+          <div></div><div>A</div><div>B</div><div>C</div><div></div><div>D</div><div>E</div><div>F</div><div></div><div>G</div><div>H</div><div>J</div>
+        </div>
+
+        <div class="section-label">— 商務艙 Row 1–8（1-2-1）—</div>
+        <div id="biz789"></div>
+
+        <hr class="divider">
+
+        <div class="section-label">— 經濟艙 Row 20–43（3-3-3）—</div>
+        <div id="econ789"></div>
+
+        <div class="tail">↓ 機尾</div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:linear-gradient(180deg,var(--seat-biz-a),var(--seat-biz-b));border:1px solid #a8703a"></span>商務艙</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:linear-gradient(180deg,var(--seat-econ-a),var(--seat-econ-b));border:1px solid #8ba3c4"></span>經濟艙</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:linear-gradient(180deg,var(--seat-exit-a),var(--seat-exit-b));border:1px solid #c85c5c"></span>緊急出口排</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#e6e6e6;border:1px solid #aaa"></span>近洗手間</div>
+        <div class="legend-item" style="grid-column: span 2;"><span class="legend-swatch" style="background:linear-gradient(180deg,#ff5252,var(--you));border:1px solid #7a0000"></span><span style="color:var(--you);font-weight:700">38H（您）— 中間排座位</span></div>
+      </div>
+
+      <div class="summary">
+        <b>座位摘要</b><br>
+        您的座位：<b>38H</b>（右側區塊中間座）<br>
+        機型：Boeing 787-9，經濟艙 3-3-3 配置（A-B-C｜D-E-F｜G-H-J）<br>
+        提醒：H 是三人一組中間的位置，不靠窗也不靠走道
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="dots">
+  <div class="dot active" data-i="0"></div>
+  <div class="dot" data-i="1"></div>
+</div>
+
+<script>
+  // ---- PAGE 1: A321neo generation ----
+  const bizRows = document.getElementById('biz-rows');
+  const econRows = document.getElementById('econ-rows');
+
+  function makeRow6(num, opts={}) {
+    const row = document.createElement('div');
+    row.className = 'row cols-6';
+    const rowNum = document.createElement('div');
+    rowNum.className = 'row-num';
+    rowNum.textContent = num;
+    row.appendChild(rowNum);
+
+    const labels = ['A','B','C','D','E','F'];
+    const seatClasses = opts.seatClass || '';
+    const highlight = opts.highlight || {};
+
+    labels.slice(0,3).forEach(letter=>{
+      const s = document.createElement('div');
+      let cls = 'seat ' + seatClasses;
+      if (highlight[letter]) cls += ' ' + highlight[letter];
+      s.className = cls.trim();
+      s.textContent = opts.showLetters ? letter : '';
+      row.appendChild(s);
+    });
+    const aisle = document.createElement('div');
+    aisle.className = 'aisle';
+    row.appendChild(aisle);
+    labels.slice(3,6).forEach(letter=>{
+      const s = document.createElement('div');
+      let cls = 'seat ' + seatClasses;
+      if (highlight[letter]) cls += ' ' + highlight[letter];
+      s.className = cls.trim();
+      s.textContent = opts.showLetters ? letter : '';
+      row.appendChild(s);
+    });
+    return row;
+  }
+
+  for (let r=1; r<=5; r++){
+    const row = document.createElement('div');
+    row.className = 'row cols-6';
+    const rowNum = document.createElement('div');
+    rowNum.className='row-num';
+    rowNum.textContent = r;
+    row.appendChild(rowNum);
+    ['A','B'].forEach(()=>{
+      const s = document.createElement('div'); s.className='seat biz'; row.appendChild(s);
+    });
+    row.appendChild(document.createElement('div'));
+    const aisle = document.createElement('div'); aisle.className='aisle'; row.appendChild(aisle);
+    row.appendChild(document.createElement('div'));
+    ['E','F'].forEach(()=>{
+      const s = document.createElement('div'); s.className='seat biz'; row.appendChild(s);
+    });
+    bizRows.appendChild(row);
+  }
+
+  for (let r=6; r<=34; r++){
+    let opts = {seatClass:'', showLetters:false};
+    if (r===13 || r===14) opts.seatClass = 'exit';
+    if (r===21) { opts.showLetters = true; opts.highlight = {C:'you', D:'fam', E:'fam'}; }
+    if (r>=31) opts.seatClass = 'lav';
+    econRows.appendChild(makeRow6(r, opts));
+  }
+
+  // ---- PAGE 2: 787-9 generation (3-3-3) ----
+  const biz789 = document.getElementById('biz789');
+  const econ789 = document.getElementById('econ789');
+
+  function makeRow9(num, opts={}) {
+    const row = document.createElement('div');
+    row.className = 'row cols-9';
+    const rowNum = document.createElement('div');
+    rowNum.className = 'row-num';
+    rowNum.textContent = num;
+    row.appendChild(rowNum);
+
+    const labels = ['A','B','C','D','E','F','G','H','J'];
+    const seatClasses = opts.seatClass || '';
+    const highlight = opts.highlight || {};
+
+    function block(letters){
+      letters.forEach(letter=>{
+        const s = document.createElement('div');
+        let cls = 'seat ' + seatClasses;
+        if (highlight[letter]) cls += ' ' + highlight[letter];
+        s.className = cls.trim();
+        s.textContent = opts.showLetters ? letter : '';
+        row.appendChild(s);
+      });
+    }
+    block(labels.slice(0,3));
+    const a1 = document.createElement('div'); a1.className='aisle'; row.appendChild(a1);
+    block(labels.slice(3,6));
+    const a2 = document.createElement('div'); a2.className='aisle'; row.appendChild(a2);
+    block(labels.slice(6,9));
+    return row;
+  }
+
+  // Business 1-2-1: rows 1-8, only show A and J as single seats, D/E or E/F center pair varies row-odd/even
+  // Simplify visual: show A (window), D-E pair or E-F pair center depending on parity, J (window)
+  for (let r=1; r<=8; r++){
+    const row = document.createElement('div');
+    row.className = 'row cols-9';
+    const rowNum = document.createElement('div');
+    rowNum.className='row-num'; rowNum.textContent = r;
+    row.appendChild(rowNum);
+
+    const sA = document.createElement('div'); sA.className='seat biz'; row.appendChild(sA);
+    row.appendChild(document.createElement('div'));
+    row.appendChild(document.createElement('div'));
+
+    const aisle1 = document.createElement('div'); aisle1.className='aisle'; row.appendChild(aisle1);
+
+    // center pair, offset depending on odd/even to hint honeymoon seating
+    if (r % 2 === 1){
+      row.appendChild(document.createElement('div'));
+      const c1 = document.createElement('div'); c1.className='seat biz'; row.appendChild(c1);
+      const c2 = document.createElement('div'); c2.className='seat biz'; row.appendChild(c2);
+    } else {
+      const c1 = document.createElement('div'); c1.className='seat biz'; row.appendChild(c1);
+      const c2 = document.createElement('div'); c2.className='seat biz'; row.appendChild(c2);
+      row.appendChild(document.createElement('div'));
+    }
+
+    const aisle2 = document.createElement('div'); aisle2.className='aisle'; row.appendChild(aisle2);
+
+    row.appendChild(document.createElement('div'));
+    row.appendChild(document.createElement('div'));
+    const sJ = document.createElement('div'); sJ.className='seat biz'; row.appendChild(sJ);
+
+    biz789.appendChild(row);
+  }
+
+  // Economy rows 20-43 (approx numbering), highlight row 38 with H
+  for (let r=20; r<=43; r++){
+    let opts = {seatClass:'', showLetters:false};
+    if (r===30 || r===31) opts.seatClass = 'exit';
+    if (r===38) { opts.showLetters = true; opts.highlight = {H:'you'}; }
+    if (r>=40) opts.seatClass = 'lav';
+    econ789.appendChild(makeRow9(r, opts));
+  }
+
+  // ---- Dots sync ----
+  const pager = document.getElementById('pager');
+  const dots = document.querySelectorAll('.dot');
+  pager.addEventListener('scroll', ()=>{
+    const idx = Math.round(pager.scrollLeft / pager.clientWidth);
+    dots.forEach((d,i)=> d.classList.toggle('active', i===idx));
+  });
+  dots.forEach(d=>{
+    d.style.pointerEvents = 'auto';
+    d.addEventListener('click', ()=>{
+      const i = parseInt(d.dataset.i);
+      pager.scrollTo({left: i*pager.clientWidth, behavior:'smooth'});
+    });
+  });
+</script>
+</body>
+</html>

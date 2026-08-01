@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+  <rect width="900" height="600" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="450" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#c8102e">土耳其航空 Airbus A321neo</text>
+  <text x="450" y="68" font-family="Arial, sans-serif" font-size="15" text-anchor="middle" fill="#555">TK1826　CDG → IST　經濟艙 3-3 配置</text>
+
+  <!-- Fuselage outline -->
+  <rect x="150" y="100" width="600" height="440" rx="60" fill="#f5f5f7" stroke="#333" stroke-width="2"/>
+
+  <!-- Nose label -->
+  <text x="450" y="90" font-family="Arial, sans-serif" font-size="13" text-anchor="middle" fill="#888">機艏（前方）</text>
+  <!-- Tail label -->
+  <text x="450" y="558" font-family="Arial, sans-serif" font-size="13" text-anchor="middle" fill="#888">機尾（後方）</text>
+
+  <!-- Aisle -->
+  <line x1="450" y1="120" x2="450" y2="520" stroke="#ccc" stroke-width="2" stroke-dasharray="6,6"/>
+  <text x="450" y="300" font-family="Arial, sans-serif" font-size="13" text-anchor="middle" fill="#999" transform="rotate(90 450 300)">走道</text>
+
+  <!-- Left side label -->
+  <text x="230" y="130" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">左側　A · B · C</text>
+  <!-- Right side label -->
+  <text x="670" y="130" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">右側　D · E · F</text>
+
+  <!-- Rows 19-23 as sample, highlight row 21 -->
+  <!-- generate seat rows -->
+  <!-- Row 19 -->
+  <g font-family="Arial, sans-serif" font-size="12" fill="#444">
+    <text x="130" y="188" text-anchor="end">19</text>
+    <rect x="175" y="170" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="210" y="170" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="245" y="170" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="625" y="170" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="660" y="170" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="695" y="170" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+
+    <!-- Row 20 -->
+    <text x="130" y="228" text-anchor="end">20</text>
+    <rect x="175" y="210" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="210" y="210" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="245" y="210" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="625" y="210" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="660" y="210" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="695" y="210" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+
+    <!-- Row 21 - HIGHLIGHT C -->
+    <text x="130" y="268" text-anchor="end" font-weight="bold" fill="#c8102e">21</text>
+    <rect x="175" y="250" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="210" y="250" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="245" y="250" width="30" height="30" fill="#c8102e" stroke="#900" stroke-width="2"/>
+    <rect x="625" y="250" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="660" y="250" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="695" y="250" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+
+    <!-- Seat letters row 21 -->
+    <text x="190" y="270" text-anchor="middle" fill="#333">A</text>
+    <text x="225" y="270" text-anchor="middle" fill="#333">B</text>
+    <text x="260" y="270" text-anchor="middle" fill="#fff" font-weight="bold">C</text>
+    <text x="640" y="270" text-anchor="middle" fill="#333">D</text>
+    <text x="675" y="270" text-anchor="middle" fill="#333">E</text>
+    <text x="710" y="270" text-anchor="middle" fill="#333">F</text>
+
+    <!-- Row 22 -->
+    <text x="130" y="308" text-anchor="end">22</text>
+    <rect x="175" y="290" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="210" y="290" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="245" y="290" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="625" y="290" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="660" y="290" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="695" y="290" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+
+    <!-- Row 23 -->
+    <text x="130" y="348" text-anchor="end">23</text>
+    <rect x="175" y="330" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="210" y="330" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="245" y="330" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="625" y="330" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="660" y="330" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+    <rect x="695" y="330" width="30" height="30" fill="#e0e0e0" stroke="#999"/>
+  </g>
+
+  <!-- Callout box -->
+  <rect x="330" y="400" width="240" height="110" rx="10" fill="#fff5f5" stroke="#c8102e" stroke-width="2"/>
+  <text x="450" y="428" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#c8102e">您的座位：21C</text>
+  <text x="450" y="452" font-family="Arial, sans-serif" font-size="13" text-anchor="middle" fill="#333">位置：左側走道座（Aisle）</text>
+  <text x="450" y="474" font-family="Arial, sans-serif" font-size="13" text-anchor="middle" fill="#333">配置：經濟艙 3-3 排列</text>
+  <text x="450" y="496" font-family="Arial, sans-serif" font-size="13" text-anchor="middle" fill="#333">特點：進出方便，靠近走道</text>
+
+</svg>
