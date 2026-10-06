@@ -1,9 +1,9 @@
 /*
  * seatmap.js — 座位圖共用渲染模組
- * 把機型的座位排列畫成 DOM。index.html 跟 scanner.html 共用這份邏輯，
- * 避免兩個頁面各自複製一份幾乎一樣的座位生成程式碼。
+ * 輸入機型 + 座位，輸出座位圖 DOM。index.html 與 scanner.html 共用。
  *
- * 座位圖是通用範本（概略 3-3 / 3-3-3 配置），不是任一航空公司的精確座位圖。
+ * 每個機型都是「通用範本」（典型的艙等排數與座位配置），不是任一航空公司的精確座位圖。
+ * 新增機型只要在 SPECS 加一筆設定。
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
@@ -21,148 +21,108 @@
     return e;
   }
 
-  function seatClass(base, highlightMap, letter) {
-    var cls = 'seat ' + (base || '');
-    if (highlightMap && highlightMap[letter]) cls += ' ' + highlightMap[letter];
-    return cls.trim();
-  }
+  // 商務艙排列以經濟艙網格表示，null 代表該格留空，讓兩種艙等的欄位對齊
+  function fixed(groups) { return function () { return groups; }; }
+  function staggered(odd, even) { return function (r) { return r % 2 === 1 ? odd : even; }; }
 
-  // 6 欄（3-3）經濟艙列：A B C | D E F
-  function makeRow6(num, opts) {
-    opts = opts || {};
-    var row = div('row cols-6');
-    row.appendChild(div('row-num', num));
-
-    var labels = ['A', 'B', 'C', 'D', 'E', 'F'];
-    labels.slice(0, 3).forEach(function (letter) {
-      row.appendChild(div(seatClass(opts.seatClass, opts.highlight, letter), opts.showLetters ? letter : ''));
-    });
-    row.appendChild(div('aisle'));
-    labels.slice(3, 6).forEach(function (letter) {
-      row.appendChild(div(seatClass(opts.seatClass, opts.highlight, letter), opts.showLetters ? letter : ''));
-    });
-    return row;
-  }
-
-  // 9 欄（3-3-3）經濟艙列：A B C | D E F | G H J
-  function makeRow9(num, opts) {
-    opts = opts || {};
-    var row = div('row cols-9');
-    row.appendChild(div('row-num', num));
-
-    var labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'];
-    function block(letters) {
-      letters.forEach(function (letter) {
-        row.appendChild(div(seatClass(opts.seatClass, opts.highlight, letter), opts.showLetters ? letter : ''));
-      });
+  var SPECS = {
+    'A321neo': {
+      label: 'Airbus A319 / A320 / A321（含 neo）',
+      econ: [['A', 'B', 'C'], ['D', 'E', 'F']],
+      econLayout: '3-3',
+      econRows: [6, 34],
+      biz: { rows: [1, 5], layout: '2-2', pattern: fixed([['A', 'C', null], [null, 'D', 'F']]) },
+      exitRows: [13, 14],
+      lavFrom: 31
+    },
+    '737': {
+      label: 'Boeing 737 / 737 MAX',
+      econ: [['A', 'B', 'C'], ['D', 'E', 'F']],
+      econLayout: '3-3',
+      econRows: [5, 33],
+      biz: { rows: [1, 4], layout: '2-2', pattern: fixed([['A', 'C', null], [null, 'D', 'F']]) },
+      exitRows: [15, 16]
+    },
+    'A330': {
+      label: 'Airbus A330',
+      econ: [['A', 'C'], ['D', 'E', 'F', 'G'], ['H', 'K']],
+      econLayout: '2-4-2',
+      econRows: [10, 45],
+      biz: { rows: [1, 7], layout: '1-2-1', pattern: fixed([['A', null], [null, 'E', 'F', null], [null, 'K']]) },
+      exitRows: [27]
+    },
+    'A350': {
+      label: 'Airbus A350',
+      econ: [['A', 'B', 'C'], ['D', 'E', 'F'], ['G', 'H', 'K']],
+      econLayout: '3-3-3',
+      econRows: [20, 48],
+      biz: {
+        rows: [1, 8], layout: '1-2-1',
+        pattern: staggered(
+          [['A', null, null], [null, 'E', 'F'], [null, null, 'K']],
+          [['A', null, null], ['D', 'E', null], [null, null, 'K']]
+        )
+      },
+      exitRows: [30]
+    },
+    '777': {
+      label: 'Boeing 777',
+      econ: [['A', 'B', 'C'], ['D', 'E', 'F', 'G'], ['H', 'J', 'K']],
+      econLayout: '3-4-3',
+      econRows: [20, 52],
+      biz: { rows: [1, 8], layout: '1-2-1', pattern: fixed([['A', null, null], [null, 'E', 'F', null], [null, null, 'K']]) },
+      exitRows: [32]
+    },
+    '787-9': {
+      label: 'Boeing 787（-8 / -9 / -10）',
+      econ: [['A', 'B', 'C'], ['D', 'E', 'F'], ['G', 'H', 'J']],
+      econLayout: '3-3-3',
+      econRows: [20, 43],
+      biz: {
+        rows: [1, 8], layout: '1-2-1',
+        pattern: staggered(
+          [['A', null, null], [null, 'E', 'F'], [null, null, 'J']],
+          [['A', null, null], ['D', 'E', null], [null, null, 'J']]
+        )
+      },
+      exitRows: [30, 31],
+      lavFrom: 40
     }
-    block(labels.slice(0, 3));
-    row.appendChild(div('aisle'));
-    block(labels.slice(3, 6));
-    row.appendChild(div('aisle'));
-    block(labels.slice(6, 9));
-    return row;
+  };
+
+  function gridTemplate(groups) {
+    var aisle = groups.length > 2 ? '10px' : '12px';
+    return '20px ' + groups.map(function (g) { return 'repeat(' + g.length + ', 1fr)'; }).join(' ' + aisle + ' ');
   }
 
   function highlightFor(row, you, companions) {
     var h = {};
+    (companions || []).forEach(function (c) { if (c.row === row) h[c.col] = 'fam'; });
     if (you && you.row === row) h[you.col] = 'you';
-    (companions || []).forEach(function (c) {
-      if (c.row === row) h[c.col] = 'fam';
-    });
     return h;
   }
 
-  var SPECS = {
-    'A321neo': {
-      label: 'Airbus A321neo',
-      colsClass: 'cols-6',
-      letterGroups: [['A', 'B', 'C'], ['D', 'E', 'F']],
-      bizLabel: 'Row 1–5',
-      econLabel: 'Row 6–34',
-      buildBiz: function (you, companions) {
-        var container = document.createElement('div');
-        // 2-2 商務艙：用 3-3 經濟艙的同一個網格，中間欄位留空
-        for (var r = 1; r <= 5; r++) {
-          var h = highlightFor(r, you, companions);
-          var row = div('row cols-6');
-          row.appendChild(div('row-num', r));
-          row.appendChild(div(seatClass('biz', h, 'A'), h.A ? 'A' : ''));
-          row.appendChild(div(seatClass('biz', h, 'B'), h.B ? 'B' : ''));
-          row.appendChild(div());
-          row.appendChild(div('aisle'));
-          row.appendChild(div());
-          row.appendChild(div(seatClass('biz', h, 'E'), h.E ? 'E' : ''));
-          row.appendChild(div(seatClass('biz', h, 'F'), h.F ? 'F' : ''));
-          container.appendChild(row);
-        }
-        return container;
-      },
-      buildEcon: function (you, companions) {
-        var container = document.createElement('div');
-        for (var r = 6; r <= 34; r++) {
-          var opts = { seatClass: '', showLetters: false };
-          if (r === 13 || r === 14) opts.seatClass = 'exit';
-          if (r >= 31) opts.seatClass = 'lav';
-          var h = highlightFor(r, you, companions);
-          if (Object.keys(h).length) { opts.showLetters = true; opts.highlight = h; }
-          container.appendChild(makeRow6(r, opts));
-        }
-        return container;
-      }
-    },
-    '787-9': {
-      label: 'Boeing 787-9 Dreamliner',
-      colsClass: 'cols-9',
-      letterGroups: [['A', 'B', 'C'], ['D', 'E', 'F'], ['G', 'H', 'J']],
-      bizLabel: 'Row 1–8（1-2-1）',
-      econLabel: 'Row 20–43（3-3-3）',
-      buildBiz: function (you, companions) {
-        var container = document.createElement('div');
-        // 1-2-1 商務艙，中間一對座位依單雙排錯位，模擬真實交錯配置
-        for (var r = 1; r <= 8; r++) {
-          var h = highlightFor(r, you, companions);
-          var row = div('row cols-9');
-          row.appendChild(div('row-num', r));
-          row.appendChild(div(seatClass('biz', h, 'A'), h.A ? 'A' : ''));
-          row.appendChild(div());
-          row.appendChild(div());
-          row.appendChild(div('aisle'));
-          if (r % 2 === 1) {
-            row.appendChild(div());
-            row.appendChild(div(seatClass('biz', h, 'E'), h.E ? 'E' : ''));
-            row.appendChild(div(seatClass('biz', h, 'F'), h.F ? 'F' : ''));
-          } else {
-            row.appendChild(div(seatClass('biz', h, 'D'), h.D ? 'D' : ''));
-            row.appendChild(div(seatClass('biz', h, 'E'), h.E ? 'E' : ''));
-            row.appendChild(div());
-          }
-          row.appendChild(div('aisle'));
-          row.appendChild(div());
-          row.appendChild(div());
-          row.appendChild(div(seatClass('biz', h, 'J'), h.J ? 'J' : ''));
-          container.appendChild(row);
-        }
-        return container;
-      },
-      buildEcon: function (you, companions) {
-        var container = document.createElement('div');
-        for (var r = 20; r <= 43; r++) {
-          var opts = { seatClass: '', showLetters: false };
-          if (r === 30 || r === 31) opts.seatClass = 'exit';
-          if (r >= 40) opts.seatClass = 'lav';
-          var h = highlightFor(r, you, companions);
-          if (Object.keys(h).length) { opts.showLetters = true; opts.highlight = h; }
-          container.appendChild(makeRow9(r, opts));
-        }
-        return container;
-      }
-    }
-  };
+  function makeRow(num, groups, template, baseClass, highlight) {
+    var row = div('row');
+    row.style.gridTemplateColumns = template;
+    row.appendChild(div('row-num', num));
+    var showLetters = Object.keys(highlight).length > 0;
+    groups.forEach(function (group, i) {
+      if (i > 0) row.appendChild(div('aisle'));
+      group.forEach(function (letter) {
+        if (letter == null) { row.appendChild(div()); return; }
+        var cls = ('seat ' + baseClass + (highlight[letter] ? ' ' + highlight[letter] : '')).replace(/\s+/g, ' ').trim();
+        row.appendChild(div(cls, showLetters ? letter : ''));
+      });
+    });
+    return row;
+  }
 
-  function buildColLabels(spec) {
-    var row = div('col-labels ' + spec.colsClass);
-    spec.letterGroups.forEach(function (group, i) {
+  function colLabels(groups, template) {
+    var row = div('col-labels');
+    row.style.gridTemplateColumns = template;
+    row.appendChild(div());
+    groups.forEach(function (group, i) {
       if (i > 0) row.appendChild(div());
       group.forEach(function (letter) { row.appendChild(div(null, letter)); });
     });
@@ -170,9 +130,10 @@
   }
 
   /**
-   * 渲染一個機型的座位圖（商務艙 + 經濟艙），回傳 .fuselage DOM 節點。
+   * 渲染座位圖，回傳 .fuselage DOM 節點。
+   * 座位排數超出範本時會自動延伸經濟艙，讓座位一定畫得出來。
    * @param {Object} opts
-   * @param {string} opts.type 'A321neo' | '787-9'
+   * @param {string} opts.type SPECS 的 key
    * @param {{row:number, col:string}} [opts.you] 標紅的座位
    * @param {{row:number, col:string}[]} [opts.companions] 標綠的同行者座位
    */
@@ -183,15 +144,37 @@
 
     var you = opts.you || null;
     var companions = opts.companions || [];
+    var template = gridTemplate(spec.econ);
+
+    var bizStart = spec.biz.rows[0], bizEnd = spec.biz.rows[1];
+    var econStart = spec.econRows[0], econEnd = spec.econRows[1];
+    [you].concat(companions).forEach(function (s) {
+      if (!s || !(s.row > bizEnd)) return;
+      if (s.row < econStart) econStart = s.row;
+      if (s.row > econEnd) econEnd = s.row;
+    });
 
     var fuselage = div('fuselage');
     fuselage.appendChild(div('nose', '機艏 ↑'));
-    fuselage.appendChild(buildColLabels(spec));
-    fuselage.appendChild(div('section-label', '— 商務艙 ' + spec.bizLabel + ' —'));
-    fuselage.appendChild(spec.buildBiz(you, companions));
-    fuselage.appendChild(document.createElement('hr')).className = 'divider';
-    fuselage.appendChild(div('section-label', '— 經濟艙 ' + spec.econLabel + ' —'));
-    fuselage.appendChild(spec.buildEcon(you, companions));
+    fuselage.appendChild(colLabels(spec.econ, template));
+
+    fuselage.appendChild(div('section-label', '— 商務艙 Row ' + bizStart + '–' + bizEnd + '（' + spec.biz.layout + '）—'));
+    for (var r = bizStart; r <= bizEnd; r++) {
+      fuselage.appendChild(makeRow(r, spec.biz.pattern(r), template, 'biz', highlightFor(r, you, companions)));
+    }
+
+    var hr = document.createElement('hr');
+    hr.className = 'divider';
+    fuselage.appendChild(hr);
+
+    fuselage.appendChild(div('section-label', '— 經濟艙 Row ' + econStart + '–' + econEnd + '（' + spec.econLayout + '）—'));
+    for (var e = econStart; e <= econEnd; e++) {
+      var base = '';
+      if (spec.exitRows && spec.exitRows.indexOf(e) !== -1) base = 'exit';
+      if (spec.lavFrom && e >= spec.lavFrom) base = 'lav';
+      fuselage.appendChild(makeRow(e, spec.econ, template, base, highlightFor(e, you, companions)));
+    }
+
     fuselage.appendChild(div('tail', '↓ 機尾'));
     return fuselage;
   }

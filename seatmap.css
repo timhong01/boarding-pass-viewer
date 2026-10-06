@@ -41,8 +41,6 @@
   align-items:center;
   margin-bottom:4px;
 }
-.cols-6{grid-template-columns: 20px repeat(3, 1fr) 12px repeat(3, 1fr);}
-.cols-9{grid-template-columns: 20px repeat(3, 1fr) 10px repeat(3, 1fr) 10px repeat(3, 1fr);}
 .row-num{
   font-size:10.5px;
   color:#555;

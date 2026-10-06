@@ -313,6 +313,12 @@
         if (!sel.value) return;
         var you = { row: parseInt(leg.seat.row, 10), col: leg.seat.column };
         mount.appendChild(SeatMap.render({ type: sel.value, you: you }));
+        if (!mount.querySelector('.seat.you')) {
+          var warn = document.createElement('div');
+          warn.className = 'no-seat-hint';
+          warn.textContent = '這個機型範本上沒有 ' + leg.seat.display + ' 這個位置，可能選錯機型，或該航空公司的座位編排與通用範本不同。';
+          mount.insertBefore(warn, mount.firstChild);
+        }
       });
     });
   }
